@@ -2,7 +2,9 @@
 version: '3.7'
 
 networks:
-- captain-overlay-network
+  default:
+    external:
+      name: captain-overlay-network
 
 services:
 
@@ -17,7 +19,8 @@ services:
       - .env
     ports: [ "${CYBER_DOJO_WEB_PORT}:${CYBER_DOJO_WEB_PORT}" ]
     restart: 'no'
-
+    networks:
+     - default
   # - - - - - - - - - - - - - - - -
   creator:
     image: ${CYBER_DOJO_CREATOR_IMAGE}:${CYBER_DOJO_CREATOR_TAG}
