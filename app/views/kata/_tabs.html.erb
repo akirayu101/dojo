@@ -1,0 +1,94 @@
+
+<div class="tab-filenames">
+  <div class="tab filename"></div>
+  <div class="tab output">output</div>
+  <div class="tab REPL">REPL</div>
+</div>
+
+<script type="text/javascript">
+'use strict';
+$(() => {
+
+  const tabs = cd.kata.tabs;
+
+  const $tabs = () => $('.tab');
+
+  tabs.setup = (options) => {
+    if (options.repl === 'on' && "<%= raw @image_name %>".includes('python')) {
+      tabs.repl().show();
+    } else {
+      tabs.repl().hide();
+    }
+    $tabs().addClass(cd.settings.theme());
+  };
+
+  const select = ($tab) => {
+    $tabs().removeClass('selected');
+    $tab.addClass('selected');
+  };
+
+  tabs.filename = () => $('.tab.filename');
+  tabs.output   = () => $('.tab.output');
+  tabs.repl     = () => $('.tab.REPL');
+
+  tabs.selected = () => $('.tab.selected');
+
+  tabs.reserves = (filename) => {
+    const tabNames = [];
+    tabNames.push(tabs.output().text());
+    tabNames.push(tabs.repl().text());
+    return tabNames.includes(filename);
+  };
+
+  tabs.setFilename = (filename) => {
+    // Called from filenames. Always a true filename.
+    const $tab = tabs.filename();
+    $tab.text(filename).show();
+    cd.kata.editor.showFile(filename);
+    cd.kata.repl.close();
+    select($tab);
+  };
+
+  tabs.toggle = () => {
+    // Alt-O tabs hot-key navigation
+    // See app/assets/javascripts/cyber-dojo_codemirror.js
+    // See app/views/shared/_hotkeys.html.erb
+    if (tabs.selected().text() === 'output') {
+      tabs.filename().click();
+    } else {
+      tabs.output().click();
+    }
+  };
+
+  const setupFileTabClickHandler = ($tab) => {
+    $tab.click(() => {
+      const filename = $tab.text();
+      cd.kata.editor.showFile(filename);
+      cd.kata.repl.close();
+      select($tab);
+      if (filename === 'output') {
+        cd.kata.filenames.unselectAll();
+      } else {
+        cd.kata.filenames.select(filename);
+      }
+    });
+  };
+
+  const setupReplTabClickHandler = ($tab) => {
+    $tab.click(() => {
+      if ($tab.is('.selected')) { return; }
+      select($tab);
+      tabs.repl().show();
+      cd.kata.editor.hideCurrentFile();
+      cd.kata.repl.open();
+    });
+  };
+
+  //- - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  setupFileTabClickHandler(tabs.filename());
+  setupFileTabClickHandler(tabs.output());
+  setupReplTabClickHandler(tabs.repl());
+
+});
+</script>

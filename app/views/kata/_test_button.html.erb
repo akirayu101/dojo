@@ -1,0 +1,55 @@
+
+<button type="button" id="test-button">test</button>
+
+<script type="text/javascript">
+'use strict';
+$(() => {
+
+  const form = $('form');
+
+  cd.testButton = $('#test-button');
+  cd.testButton.enable  = () => cd.testButton.attr('disabled', false);
+  cd.testButton.disable = () => cd.testButton.attr('disabled', true);
+
+  cd.testButton.click(() => cd.predictTrafficLight(testButtonClick));
+
+  const testButtonClick = (onComplete) => {
+    // Called from 3 places
+    // 1. when you click [test]
+    // 2. when you hot-key Alt-T
+    // 3. when you revert from a diff-review
+    cd.testButton.disable();
+    cd.saveCodeFromSyntaxHighlightEditors();
+    cd.waitSpinner.fadeIn('slow', () => {
+      $.ajax({
+           timeout: 30000, // [X]
+              type: 'POST',
+               url: form.attr('action'),
+              data: form.serialize(),
+              error: error,
+          complete: (_xhr, _status) => {
+            cd.testButton.enable();
+            cd.waitSpinner.fadeOut('slow');
+            if (onComplete != undefined) {
+              onComplete();
+            }
+          }
+      });
+    });
+    // [X] This 30s timeout is different to max_seconds
+    // from the start-point's manifest.json file.
+  };
+
+  //- - - - - - - - - - - - - - - - - - - - - - -
+  const error = (request, status, thrown) => {
+    const message = [
+      request.responseText,
+      '----------------------------',
+      `Status=${status}`,
+      thrown
+    ].join("\n");
+    cd.dialogError(message);
+  };
+
+});
+</script>

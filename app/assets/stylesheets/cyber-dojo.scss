@@ -1,0 +1,23 @@
+
+table { border-spacing: 0; }
+
+#cyber-dojo-page
+{
+  font-size: 0.9em;
+     margin: 0px;
+      color: $lighter-color;
+}
+
+body
+{
+  @include non-code-font();
+  background: $darker-color;
+     padding: 0px;
+      margin: 0px;
+}
+
+.avatar-image
+{
+  margin: { left: 0px; right: 1px; top: 0px; bottom: 0px; }
+  cursor: pointer;
+}

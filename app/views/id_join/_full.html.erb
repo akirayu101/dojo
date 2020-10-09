@@ -1,0 +1,15 @@
+<div id="full-info">
+  <table class="align-center">
+    <% 8.times do |y| %>
+    <tr>
+      <% 8.times do |x| %>
+      <td>
+        <% index = y*8 + x %>
+        <img src="/avatars/image/<%= index %>"
+             class="avatar small" />
+      </td>
+      <% end %>
+    </tr>
+    <% end %>
+  </table>
+</div>

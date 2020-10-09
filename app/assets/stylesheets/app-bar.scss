@@ -1,0 +1,79 @@
+
+#app-bar
+{
+  @include plaintext-font();
+     display: flex;
+  background: lighten($darker-color, 8%);
+       color: $lighter-color;
+   font-size: 1.05em;
+       width: 100%;
+      height: 23px;
+  text-align: left;
+     padding: { left: 35px; top: 4px; bottom: 3px; }
+    position: fixed;
+         top: 0px;
+     z-index: 1000;
+
+  #settings-button, #info-button
+  {
+    padding: { left:1px; right:1px; top:0px; bottom:0px; }
+     margin: { left:1px; right:1px; top:0px; bottom:0px; }
+    cursor: pointer;
+  }
+  #settings-button
+  {
+    width: 20px;
+    height: 20px;
+    position: relative;
+    top: 2px;
+  }
+  #info-button
+  {
+    width: 17px;
+    height: 17px;
+    position: relative;
+    top: 4px;
+  }
+
+  #display-name-box, #exercise-name-box, #id-box
+  {
+    @include edged-panel();
+    font-size: 10px;
+    cursor: default;
+    background: $darker-color;
+    display: inline-table;
+    margin: { left:3px; right:3px; }
+    white-space: nowrap;
+    position: relative;
+    top: 1px;
+  }
+
+  #charity-button, #feedback-button,
+  #traffic-lights-button, #dashboard-button, #help-button, #hotkeys-button, #shas-button
+  {
+    @include rounded-corner(3px);
+       display: block;
+       padding: { left:7px; right:7px; top:0px; bottom:1px; }
+        margin: { top:0px; bottom:0px; left:3px; right:3px; }
+         color: darken($darker-color, 10%);
+     font-size: 10px;
+        height: 17px;
+        position: relative;
+        top: 3px;
+  }
+
+  // These buttons are switched on in the kata/edit page.
+  #settings-button, #hotkeys-button  { display:none; }
+  .info-button { display:none; }
+
+}
+
+#charity-dialog, #feedback-dialog, #traffic-lights-dialog, #hotkeys-dialog
+{
+  a { color: khaki !important; }
+}
+#charity-dialog li { margin-top: 10px; }
+
+.info-title { font-size:15px; position:relative; top:-5px; }
+
+#settings-dialog label { font-size:13px; }

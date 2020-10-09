@@ -1,0 +1,346 @@
+
+@mixin diff-pre-block
+{
+  white-space: pre;
+      display: block;
+}
+
+#review-page
+{
+  @include non-code-font();
+  margin: { top: 36px; left: 35px; }
+  display: none;
+     padding: 0px;
+  background: $darker-color;
+       color: $lighter-color;
+
+  #review-top-row
+  {
+    max-width: 1075px;
+    padding-top: 3px;
+    display: flex;
+  }
+  .left-column
+  {
+    padding-top: 10px;
+    width: 295px;
+  }
+
+  #avatar-navigator, #traffic-light-navigator { max-height: 25px; }
+
+  img.avatar-image
+  {
+    @include rounded-corner(6px);
+     cursor: default;
+      width: 21px;
+     height: 21px;
+     margin: 0px;
+    padding: 0px;
+     margin: 0px;
+  }
+
+  #resume-button
+  {
+    @include font-size-medium();
+    margin: { left:1px; right: 5px; }
+         padding: { top:0px; bottom:2px; left:8px; right:8px; }
+      text-align: center;
+     font-weight: bold;
+  }
+
+  #diff-checkbox-container
+  {
+    @include edged-panel();
+    background: lighten($darker-color,10%);
+       width: 55px;
+      margin: { left: 0px; right: 5px; }
+     padding: { top:4px; bottom:0px; right:4px; }
+    position: relative;
+         top: 1px;
+    #diff-checkbox-title
+    {
+      @include plaintext-font();
+           cursor: pointer;
+        font-size: 12px;
+          display: inline;
+         position: relative;
+           bottom: 3px;
+    }
+  }
+
+  #resume-button-box,
+  #diff-checkbox-container,
+  #fork-button-box,
+  #checkout-button-box
+  {
+    display: inline;
+    margin: 0px;
+  }
+
+  #diff-checkbox
+  {
+    width: 15px;
+    height: 15px;
+    zoom: 1.1; // Safari
+    -moz-transform: scale(1.1);
+    cursor: pointer;
+    position: relative;
+    top: -3px;
+  }
+
+  #fork-button, #checkout-button
+  {
+    @include rounded-corner(3px);
+    text-align: left;
+    font-size: 10px;
+    margin-left: 5px;
+    padding: { bottom:1px; top:1px; left:6px; right:6px; }
+    position: relative;
+    top: -3px;
+  }
+
+  #review-traffic-lights
+  {
+       display: inline-flex;
+        margin: 0px;
+    overflow-x: auto;
+    overflow-y: auto;
+    &::-webkit-scrollbar:horizontal { height: 0px; }
+
+    .diff-traffic-light { display: grid; }
+
+    img.diff-traffic-light
+    {
+      cursor: pointer;
+      width: 22px;
+      height: 22px;
+    }
+    img#traffic-light-marker
+    {
+      padding-left: 1px;
+      width: 22px;
+      height: 3px;
+      vertical-align: top;
+    }
+
+    img.revert, img.tick, img.cross
+    {
+      width:11px;
+      height:11px;
+      padding-top:13px;
+      position:relative;
+      left:2px;
+    }
+  }
+
+  #traffic-light-navigator, #avatar-navigator
+  {
+    @include edged-panel();
+    background: lighten($darker-color,10%);
+    padding-bottom: 0px;
+    display: flex;
+    margin-left: 2px;
+    margin-right: 6px;
+    #review-index-box
+    {
+      min-width: 30px;
+      #index-number
+      {
+        @include rounded-corner(4px);
+           padding: { left: 3px; right: 3px; }
+         font-size: 21px;
+        text-align: center;
+          position: relative;
+               top: -3px;
+      }
+    }
+    .triangle.button
+    {
+      @include rounded-corner(4px);
+      width: 20px;
+      height: 20px;
+      padding: 0px;
+      border: 1px solid lighten($darker-color,35%);
+      &:hover { border: 1px dotted lighten($darker-color,35%); }
+      &[disabled]
+      {
+        background: lighten($darker-color,35%);
+        &:hover { border: 1px solid lighten($darker-color,35%); }
+      }
+    }
+    #first-index, #prev-index, #next-index, #last-index,
+    #prev-avatar, #next-avatar
+    {
+      img
+      {
+        @include rounded-corner(0px);
+           width: 12px;
+          height: 12px;
+         padding: 0px;
+         position: relative; top: 1px; // down
+      }
+    }
+    #first-index, #last-index
+    {
+      &.triangle.button
+      {
+        width: 15px;
+        height: 15px;
+      }
+      img
+      {
+        width: 6px;
+       height: 6px;
+       padding: 0px;
+       position: relative; top: -1px; // up
+      }
+    }
+  }
+
+  .diff-traffic-light img { position:relative; top:2px; }
+  #diff-filenames
+  {
+    display: flex;
+    flex-direction: column;
+    float: left;
+    height: 490px;
+    margin: { top: 8px; }
+    overflow-x: auto;
+    overflow-y: auto;
+    &::-webkit-scrollbar:vertical { width: 0px; }
+    &::-webkit-scrollbar:horizontal { height: 0px; }
+
+    font-size: 11pt;
+
+    .diff-filename-box
+    {
+      display: flex;
+      flex-direction: row;
+    }
+
+    .filename
+    {
+      @include wide-list-item();
+      @include rounded-corner(3px);
+      letter-spacing: 0.03em;
+
+       height: 16px;
+      padding: { left: 4px; top: 2px; bottom: 4px; }
+       border: 1px solid $darker-color;
+       margin: { bottom: 2px; }
+
+           width: 230px;
+       max-width: 230px;
+
+      &[data-filename='status'] { margin-top: 20px; }
+      &[data-filename='stdout'] { margin-bottom: 20px; }
+
+      color: lighten($darker-color,50%);
+
+      &.selected
+      {
+        background: $lighter-color;
+        color: $darker-color;
+      }
+    }
+  }
+
+  #diff-content { position:relative; top:10px; }
+
+  .diff-line-numbers,
+  .diff-sheet
+  {
+    background: $projector-background;
+    @include code-font();
+     font-size: 11.4pt; // Matches font used in CodeMirror
+        height: 575px;
+        margin: 0px;
+       padding: 0px;
+        cursor: default;
+
+    added, deleted, same
+    {
+      @include diff-pre-block;
+      padding-left: 0px;
+      color: black;
+    }
+    added   { background: $diff-added-line-background; }
+		deleted { background: $diff-deleted-line-background; }
+  }
+
+  .diff-line-numbers
+  {
+    background: darken($projector-background, 5%);
+         width: 40px;
+    text-align: right;
+      overflow: hidden;
+        border: none;
+    border-top-left-radius: 1px;
+    added, deleted, same { color: lighten($darker-color, 30%); }
+      added:after { content: '+'; }
+    deleted:after { content: '-'; }
+       same:after { content: ' '; }
+  }
+
+  .diff-sheet
+  {
+         width: 735px; // Just enough for 80 characters at 11.4pt font.
+    text-align: left;
+    overflow-x: auto;
+    overflow-y: auto;
+    outline: none;
+     border: none;
+
+      added { border-left: 2px solid $diff-added-line-background; }
+    deleted { border-left: 2px solid $diff-deleted-line-background; }
+       same { border-left: 2px solid $projector-background; }
+
+    added, deleted, same
+    {
+      &:hover { border-left: 2px solid darken($projector-background,40%); }
+    }
+  }
+
+  .diff-deleted-line-count,
+  .diff-added-line-count
+  {
+    @include rounded-corner(4px);
+    @include right-align(0px);
+    @include diff-line-count;
+     color: $darker-color;
+    border: 1px solid lighten($darker-color,6%);
+    margin: { right: 2px; }
+    &:hover { border: 1px dotted lighten($darker-color,6%); }
+    &[disabled]:hover { border: 1px solid lighten($darker-color,6%); }
+    cursor: pointer;
+
+    &[disabled]
+    {
+      background: lighten($darker-color,10%);
+      cursor: default;
+    }
+
+    &[data-filename='status'] { margin-top: 20px; }
+    &[data-filename='stdout'] { margin-bottom: 20px; }
+  }
+
+  .diff-deleted-line-count
+  {
+    background: $diff-deleted-count-color;
+    &[disabled] { color: lighten($diff-deleted-count-color,5%); }
+  }
+
+  .diff-added-line-count
+  {
+    background: $diff-added-count-color;
+    &[disabled] { color: lighten($diff-added-count-color,5%); }
+  }
+
+  .diff-added-line-count, .diff-deleted-line-count
+  {
+    &.on  { &:before { content: ' '; } }
+    &.off { &:before { content: '*'; } }
+  }
+}
+
+.no-title .ui-dialog-titlebar { display: none; }

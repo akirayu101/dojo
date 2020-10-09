@@ -1,0 +1,31 @@
+
+<script type="text/javascript">
+'use strict';
+$(() => {
+
+  const $index = $("input[name='index']");
+
+  cd.updateIndex = (value) => {
+    // Each event has an incrementing index,
+    // as held in the back end commits.
+    $index.val(value);
+  };
+
+  cd.getIndex = () => {
+    return $index.val();
+  };
+
+});
+</script>
+
+<input name="index"        type="hidden" value="<%= @index %>">
+<input name="predicted"    type="hidden" value="none">
+
+<%# The inputs below are a manifest cache. They ensure that  %>
+<%# when [test] is clicked the web service does not not need %>
+<%# to retrieve any information from the saver service.      %>
+
+<input name="image_name"   type="hidden" value="<%= raw @image_name %>">
+<input name="max_seconds"  type="hidden" value="<%= @max_seconds %>">
+<input name="avatar_index" type="hidden" value="<%= @avatar_index %>">
+<input name="version"      type="hidden" value="<%= @version %>">

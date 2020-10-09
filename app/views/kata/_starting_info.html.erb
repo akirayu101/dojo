@@ -1,0 +1,13 @@
+
+<script type="text/javascript">
+'use strict';
+$(() => {
+
+  cd.showStartingInfoDialog = (onOff) => {
+    if (cd.trafficLightsCount() === 0 && onOff !== 'off') {
+      cd.trafficLightsButton().click();
+    }
+  };
+
+});
+</script>

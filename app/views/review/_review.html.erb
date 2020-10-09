@@ -1,0 +1,650 @@
+<script type="text/javascript"><!--
+'use strict';
+$(() => {
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // After refresh() has been called param also contains
+  // param.events
+  //   holds the traffic-lights and is used to program
+  //   the traffic-light [<][<][>][>] navigator buttons.
+  // param.prevAvatarId
+  // param.nextAvatarId
+  //   hold the kata-ids and used is used to program
+  //   the avatar [<][>] navigator buttons.
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  let param = {
+        version: "<%= @version %>",
+             id: "<%= @id %>",
+        groupId: "<%= @group_id %>",
+    avatarIndex: "<%= @avatar_index %>",
+     avatarName: "<%= @avatar_name %>",
+       wasIndex: "<%= @was_index %>",
+       nowIndex: "<%= @now_index %>",
+       filename: "<%= @filename %>"
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const $kataPage = $('#kata-page');
+  const $reviewPage = $('#review-page');
+
+  const inTestPage = $kataPage.length !== 0;
+
+  cd.setReviewData = (version, id, groupId, avatarName, avatarIndex, wasIndex, nowIndex, filename) => {
+    // Called only from app/views/kata/_traffic_lights.html.erb
+    // The [resume] & [checkout] buttons are only shown on kata/edit. [1]
+    param = {
+          version:version,
+               id:id,
+          groupId:groupId,
+       avatarName:avatarName,
+      avatarIndex:avatarIndex,
+         wasIndex:wasIndex,
+         nowIndex:nowIndex,
+         filename:filename
+    };
+    fadeIntoReviewPage();
+    setupButton('resume', () => fadeIntoKataPage(() => { // [1]
+      cd.kata.editor.refocus();
+    }));
+    setupButton('checkout', () => fadeIntoKataPage(() => { // [1]
+      cd.checkout({ src_id:param.id, src_index:param.nowIndex });
+    }));
+    setCheckoutButtonTip();
+    refresh();
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const fadeIntoReviewPage = () => {
+    $kataPage.fadeOut('fast', () => {
+      $reviewPage.fadeIn('fast');
+    });
+  };
+
+  const fadeIntoKataPage = (onComplete) => {
+    $reviewPage.fadeOut('fast', () => {
+      $kataPage.fadeIn('fast', () => {
+        onComplete();
+      });
+    });
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const moveToAvatar = (id) => {
+    param.id = id;
+    const index = inDiffMode() ? 1 : -1;
+    moveToTrafficLight(index);
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const moveToTrafficLight = (index) => {
+    const delta = inDiffMode() ? 1 : 0;
+    param.nowIndex = index;
+    param.wasIndex = index - delta;
+    refresh();
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const refresh = () => {
+    const reviewParams = {
+           version: param.version,
+                id: param.id,
+          group_id: param.groupId,
+         was_index: param.wasIndex,
+         now_index: param.nowIndex,
+          filename: param.filename
+    };
+    cd.waitSpinner.fadeIn('fast', () => {
+      $.getJSON('/differ/diff', reviewParams, (data) => {
+        cd.waitSpinner.fadeOut('fast', () => {
+          param = data;
+          refreshAvatarNavigator();
+          refreshTrafficLights();  // this first
+          refreshIndexNavigator(); // this second
+          refreshFiles();
+          refreshDiffCheckBox();
+          scrollCurrentTrafficLightIntoView();
+        });
+      });
+    });
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const scrollCurrentTrafficLightIntoView = () => {
+    // refreshTrafficLights() has updated the dom with a $('#traffic-light-marker')
+    // I cannot find a nice way to access it once the dom is ready. So this :-(
+    const quarterSecond = 250;
+    const scroller = () => {
+      $('#traffic-light-marker').scrollIntoView({
+        direction:'horizontal',
+        duration:'slow'
+      });
+    };
+    setTimeout(scroller, quarterSecond);
+  };
+
+  //-----------------------------------------
+  // diff? [x]
+  //-----------------------------------------
+
+  const inDiffMode = () => diffCheckBox().is(':checked');
+
+  const diffCheckBox = () => $('#diff-checkbox');
+
+  const refreshDiffCheckBox = () => {
+    const checked = param.wasIndex !== param.nowIndex;
+    diffCheckBox()
+      .prop('checked', checked) // must be from params
+      .unbind('click')
+      .bind('click', () => moveToTrafficLight(param.nowIndex));
+
+    $('#diff-checkbox-title')
+      .unbind('click')
+      .bind('click', () => {
+        diffCheckBox().attr('checked', !inDiffMode());
+        moveToTrafficLight(param.nowIndex);
+      });
+  };
+
+  //-----------------------------------------
+  // [<]avatar[>]
+  //-----------------------------------------
+
+  const refreshAvatarNavigator = () => {
+    if (param.avatarName === '') {
+      $('#avatar-navigator').hide();
+    } else {
+      refreshAvatar($('#prev-avatar'), param.prevAvatarId);
+      const $box = $('#review-avatar-image-box').html(makeAvatarImageHtml());
+      cd.setTip($box, () => cd.showHoverTip($box, param.avatarName));
+      refreshAvatar($('#next-avatar'), param.nextAvatarId);
+    }
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const makeAvatarImageHtml = () => {
+    return `<img class="avatar-image" src="/avatars/image/${param.avatarIndex}"/>`;
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const refreshAvatar = (button, id) => {
+    button
+      .attr('disabled', id === '')
+      .unbind('click')
+      .bind('click', () => moveToAvatar(id));
+  };
+
+  //-----------------------------------------
+  // [<][<]traffic-light-index[>][>]
+  //-----------------------------------------
+
+  const refreshIndexNavigator = () => {
+    refreshIndex($('#first-index'),prevEventIndex(1));
+    refreshIndex($('#prev-index'), prevEventIndex(param.nowIndex-1));
+    $('#review-index-box').html(makeIndexHtml());
+    refreshIndex($('#next-index'), nextEventIndex(param.nowIndex+1));
+    refreshIndex($('#last-index'), nextEventIndex(param.events.length-1));
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const refreshIndex = (button, index) => {
+    button
+      .attr('disabled', index === null)
+      .unbind('click')
+      .bind('click', () => moveToTrafficLight(index));
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const prevEventIndex = (n) => {
+    if (param.nowIndex === 1) { // 0 is creation event
+      return null; // disable
+    } else {
+      return n;
+    }
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const nextEventIndex = (n) => {
+    if (param.nowIndex === param.events.length-1) {
+      return null; // disable
+    } else {
+      return n;
+    }
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const makeIndexHtml = () => {
+    const index = param.nowIndex;
+    const colour = param.events[index].colour;
+    const number = $(`.diff-traffic-light[data-index=${index}]`).data('number');
+    return `<div id="index-number" class="${colour}">${number}</div>`;
+  };
+
+  //-----------------------------------------
+  // traffic-lights
+  //-----------------------------------------
+
+  const refreshTrafficLights = () => {
+    const trafficLights = $('#review-traffic-lights');
+    trafficLights.html(makeTrafficLightsHtml());
+    let wasIndex = 0;
+    $.each($('.diff-traffic-light', trafficLights), (_, light) => {
+      const $light = $(light);
+      const nowIndex = $light.data('index');
+      const number = $light.data('number');
+      $light.click(() => moveToTrafficLight(nowIndex));
+      cd.setupTrafficLightTip($light, param.version, param.id, param.avatarIndex, wasIndex, nowIndex, number);
+      wasIndex = nowIndex;
+    });
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const makeTrafficLightsHtml = () => {
+    let html = '';
+    let number = 1;
+    $.each(param.events, (_index, event) => {
+      if (visible(event)) {
+        html += makeTrafficLightHtml(event, number);
+        number += 1;
+      }
+    });
+    return html;
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const visible = (event) => {
+    // eg don't show event[0] == creation
+    switch (event.colour) {
+    case 'pulling':
+    case 'red':
+    case 'amber':
+    case 'green':
+    case 'timed_out':
+    case 'faulty':
+      return true;
+    default:
+      return false;
+    }
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const makeTrafficLightHtml = (light, number) => {
+    const colour = light.colour;
+    return '' +
+      `${makeRevertCircle(light)}
+       ${makePredictCircle(light)}
+       <div class="diff-traffic-light"
+         data-id="${param.id}"
+         data-number="${number}"
+         data-colour="${colour}"
+         data-index="${light.index}">
+         <img src="/images/traffic-light/${colour}.png"/>
+        ${makeTrafficLightMarkerHtml(light)}
+      </div>`;
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const makeRevertCircle = (light) => {
+    if (isRevert(light)) {
+      return '<img class="revert" src="/images/traffic-light/circle-revert.png">';
+    } else {
+      return '';
+    }
+  };
+  const isRevert = (light) => light.revert != undefined;
+
+  const makePredictCircle = (light) => {
+    if (isPredict(light)) {
+      const correct = (light.predicted === light.colour);
+      const icon = correct ? 'tick' : 'cross';
+      return `<img class="${icon}" src="/images/traffic-light/circle-${icon}.png">`;
+    } else {
+      return '';
+    }
+  };
+  const isPredict = (light) => light.predicted != undefined && light.predicted != 'none';
+
+  const makeTrafficLightMarkerHtml = (light) => {
+    const currentIndex = (param.nowIndex === light.index);
+    if (currentIndex) {
+      return `<img id='traffic-light-marker'
+                   src='/images/traffic-light/marker_${light.colour}.png'/>`;
+    } else {
+      return '';
+    }
+  };
+
+  //-----------------------------------------
+  // files
+  //-----------------------------------------
+
+  const refreshFiles = () => {
+    const diffContent = $('#diff-content');
+    const diffFilenames = $('#diff-filenames');
+    diffFilenames.html(makeDiffFilenames(param.diffs));
+    resetFilenameAddedDeletedLineCountHandlers();
+    diffContent.html(makeDiffContent(param.diffs));
+    buildDiffFilenameHandlers(param.idsAndSectionCounts);
+    showFile(param.currentFilenameId);
+  };
+
+  const showFile = (filenameId) => {
+    $(`#radio_${filenameId}`)
+      .click()
+      .scrollIntoView({ direction: 'vertical' });
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const makeDiffFilenames = (diffs) => {
+    let html = '';
+    $.each(sortedDiffs(diffs), (_, diff) => {
+      html += '<div class="diff-filename-box">';
+      const deletedLineCount = diff['delete_line_count'];
+      const addedLineCount = diff['added_line_count'];
+      const showCounts = (deletedLineCount > 0 || addedLineCount > 0);
+      html += makeDiffDeletedCount(showCounts, diff);
+      html += makeDiffAddedCount(showCounts, diff);
+      html += makeDiffFilename(diff);
+      html += '</div>';
+    });
+    return html;
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const makeDiffFilename = (diff) => {
+    return outerHTML($('<div>', {
+      'class': 'filename',
+      'data-filename': diff.filename,
+      'id': `radio_${diff.id}`,
+      'text': diff.filename
+    }));
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const makeDiffDeletedCount = (showCounts, diff) => {
+    return makeDiffCount(showCounts, diff, 'deleted_line_count', 'deleted');
+  };
+
+  const makeDiffAddedCount = (showCounts, diff) => {
+    return makeDiffCount(showCounts, diff, 'added_line_count', 'added');
+  };
+
+  const makeDiffCount = (showCounts, diff, propertyName, cssName) => {
+    if (!inDiffMode()) {
+      return '';
+    }
+    const div = $('<div>', {
+      'class': `diff-${cssName}-line-count button`,
+      'data-filename': diff.filename
+    });
+    if (showCounts) {
+      div.append(diff[propertyName]);
+    }
+    return outerHTML(div);
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const outerHTML = (element) => {
+    return element.get(0).outerHTML;
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const sortedDiffs = (diffs) => {
+    let filenames = [];
+    $.each(diffs, (_, diff) => {
+      filenames.push(diff.filename);
+    });
+    // ensure filenames appear in the same order as kata/edit page
+    const sorted = cd.sortedFilenames(filenames);
+    const diffFor = (filename) => {
+      for (let i = 0; i !== diffs.length; i++) {
+        if (diffs[i].filename === filename) {
+          return diffs[i];
+        }
+      }
+    };
+    let result = [];
+    $.each(sorted, (_, filename) => {
+      result.push(diffFor(filename));
+    });
+    return result;
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const resetFilenameAddedDeletedLineCountHandlers = () => {
+
+    const display = (node, name, value) => {
+      // only [+][-] counts for current filename are live
+      if ($(node).attr('disabled') !== 'disabled') {
+        const filename = $(node).data('filename');
+        const selector = `[id="${filename}_diff_div"] ${name}`;
+        $(selector).css('display', value);
+        if (value === 'none') {
+          $(node).removeClass('on');
+          $(node).addClass('off');
+        } else {
+          $(node).removeClass('off');
+          $(node).addClass('on');
+        }
+      }
+    };
+
+    $('.diff-deleted-line-count')
+      .clickToggle(
+        function() { display(this, 'deleted', 'none' ); },
+        function() { display(this, 'deleted', 'block'); }
+      );
+
+    $('.diff-added-line-count')
+      .clickToggle(
+        function() { display(this, 'added', 'none' ); },
+        function() { display(this, 'added', 'block'); }
+      );
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const buildDiffFilenameHandlers = (diffs) => {
+    // Builds click handlers for all filenames for a given
+    // [ kata-id, was-index, now-index] tuple.
+    // When you open a new filename it auto-scrolls its first diff-chunk.
+    // When you reclick a filename it auto-scrolls to its *next* diff-chunk.
+    const getFilename = (node) => $.trim(node.text());
+    const id = (name) => $(`[id="${name}"]`);
+    const diffFileContentFor = (filename) => id(`diff_file_content_for_${filename}`);
+    const diffFileDiv = (filename) => id(`${filename}_diff_div`);
+
+    let previousFilenameNode;
+    let alreadyOpened = [];
+
+    const loadFrom = (diff) => {
+      const id = diff.id;
+      const filenameNode = $(`#radio_${id}`);
+      const filename = getFilename(filenameNode);
+      const sectionCount = diff.section_count;
+      const diffSheet = diffFileContentFor(filename);
+      let sectionIndex = 0;
+
+      if (sectionCount > 0) {
+        filenameNode.attr('title', 'Auto-scroll through diffs');
+      }
+
+      return () => {
+
+        const reselected =
+          previousFilenameNode !== undefined &&
+            getFilename(previousFilenameNode) === filename;
+
+        $('.diff-deleted-line-count, .diff-added-line-count').attr('disabled', true);
+        $(`.diff-deleted-line-count[data-filename="${filename}"]`).attr('disabled', false);
+        $(`.diff-added-line-count[data-filename="${filename}"]`).attr('disabled', false);
+
+        $('.filename', $reviewPage).removeClass('selected');
+        filenameNode.addClass('selected');
+
+        if (previousFilenameNode !== undefined) {
+          diffFileDiv(getFilename(previousFilenameNode)).hide();
+        }
+        diffFileDiv(getFilename(filenameNode)).show();
+        previousFilenameNode = filenameNode;
+        param.filename = filename;
+
+        if (sectionCount > 0 && (reselected || !alreadyOpened.includes(filename))) {
+          const section = $(`#${id}_section_${sectionIndex}`);
+          const downFromTop = 250;
+          const halfSecond = 500;
+          diffSheet.animate({
+            scrollTop: '+=' + (section.offset().top - downFromTop) + 'px'
+          }, halfSecond);
+          sectionIndex += 1;
+          sectionIndex %= sectionCount;
+        }
+        alreadyOpened.push(filename);
+      };
+    }; // loadFrom()
+
+    $.each(diffs, (_n, diff) => {
+      const filename = $(`#radio_${diff.id}`);
+      filename.click(loadFrom(diff));
+    });
+  }; // buildDiffFilenameHandlers()
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const makeDiffContent = (diffs) => {
+    const holder = $('<span>');
+    $.each(diffs, (_, diff) => {
+      const table = $('' +
+        `<div id="${diff.filename}_diff_div" class="filename_div">` +
+        '<table>' +
+          '<tr class="valign-top">' +
+            makeTd('<div class="diff-line-numbers"></div>') +
+            makeTd(`<div id="diff_file_content_for_${diff.filename}"` +
+                   ' class="diff-sheet"></div>') +
+          '</tr>' +
+        '</table>' +
+        '</div>'
+        );
+      const content = $('.diff-sheet', table);
+      const numbers = $('.diff-line-numbers', table);
+      content.html(diff.content);
+      numbers.html(diff.line_numbers);
+      bindLineNumberScrolling(content, numbers);
+      holder.append(table);
+    });
+    return holder;
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const bindLineNumberScrolling = ($content, $numbers) => {
+    const synchScroll = () => {
+      $numbers.scrollTop($content.scrollTop());
+    };
+    $content.bind({
+      keydown   : synchScroll,
+      scroll    : synchScroll,
+      mousewheel: synchScroll,
+      mousemove : synchScroll,
+      mousedown : synchScroll,
+      mouseup   : synchScroll
+    });
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const setForkButtonTip = () => {
+    const button = $('#fork-button');
+    cd.setTip(button, () => {
+      const tip = `create a new<br/>exercise from this<br/>traffic-light's files`;
+      cd.showHoverTip(button, tip);
+    });
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const setCheckoutButtonTip = () => {
+    // Prefer 'checkout' to 'revert' since in a group exercises
+    // you can revert to other avatar's traffic-lights.
+    const button = $('#checkout-button');
+    cd.setTip(button, () => {
+      const tip = `make this traffic-light's<br/>files your current files`;
+      cd.showHoverTip(button, tip);
+    });
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const setupButton = (name, handler) => {
+    const button = `<button id="${name}-button" type="button"></button>`;
+    $(`#${name}-button-box`).html(button);
+    $(`#${name}-button`)
+      .text(name)
+      .unbind('click')
+      .bind('click', handler);
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const makeTr = (html) => `<tr>${html}</tr>`;
+  const makeTd = (html) => `<td>${html}</td>`;
+
+  // - - - - - - - - - - - - - - - - - - - - - - - -
+
+  setupButton('fork', () => cd.forkDialog(param.id, param.nowIndex));
+  setForkButtonTip();
+  if (!inTestPage) {
+    $reviewPage.show();
+    refresh();
+  }
+
+});
+
+//--></script>
+
+<%= render(:partial => 'review/filenames_extension') %>
+<%= render(:partial => 'review/filenames_highlight') %>
+<%= render(:partial => 'review/filenames_sorted') %>
+
+<div id="review-top-row">
+  <%= render(:partial => 'review/avatar_navigator') %>
+  <%= render(:partial => 'review/traffic_light_navigator') %>
+  <div id="review-traffic-lights"></div>
+</div>
+
+<table>
+  <tr valign="top">
+    <td class="left-column">
+      <div id="resume-button-box"></div>
+      <%= render(:partial => 'review/diff_checkbox') %>
+      <div id="fork-button-box"></div>
+      <div id="checkout-button-box"></div>
+      <div id="diff-filenames"></div>
+    </td>
+    <td>
+      <div id="diff-content"></div>
+    </td>
+  </tr>
+</table>

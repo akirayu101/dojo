@@ -1,0 +1,46 @@
+
+<%= render partial: 'starting_info' %>
+<%= render partial: 'shared/hover_tip_container' %>
+<%= render partial: 'shared/app_bar' %>
+<div id="review-page"><%= render partial: 'review/review' %></div>
+<div id="kata-page"><%= render partial: 'view_test' %></div>
+
+<script type="text/javascript">
+'use strict';
+$(() => {
+
+  cd.kataId = () => "<%= @id %>";
+  cd.codeMirror.resetTheme();
+  cd.kata.tabs.setup({repl:"<%= @env['REPL'] %>"});
+
+  <% @files.each do |filename,file| %>
+    cd.kata.editor.createFile(
+      "<%= j raw(filename) %>",
+      { content:"<%= j raw(file['content']) %>" }
+    );
+  <% end %>
+
+  cd.kata.editor.output(
+    "<%= j raw(@stdout) %>",
+    "<%= j raw(@stderr) %>",
+    "<%= j raw(@status) %>"
+  );
+  cd.kata.filenames.refresh();
+
+  // load initial traffic-lights
+  const events = <%= raw @events_json.gsub("\n",'') %>;
+  events.forEach((event,index) => {
+    event.index = index; // version 0 events don't store their index
+    cd.appendTrafficLight(event);
+  });
+
+  cd.predict.reset();
+  cd.turnOnSettingsButton();
+  cd.updateTrafficLightsCount();
+  cd.scrollLastTrafficLightIntoView();
+  cd.updateIndex("<%= @index %>");
+  cd.setupHotkeys();
+  cd.showStartingInfoDialog("<%= @env['STARTING_INFO_DIALOG'] %>");
+
+});
+</script>

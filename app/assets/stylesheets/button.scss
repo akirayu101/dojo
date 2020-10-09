@@ -1,0 +1,24 @@
+
+$button_border_size: 2px;
+
+button
+{
+  @include rounded-corner(3px);
+  background: $lighter-color;
+
+          display: inline-block;
+           cursor: pointer;
+          padding: { left: 0.5em; right: 0.5em; bottom: 0.1em; }
+  text-decoration: none;
+      font-weight: normal;
+           border: $button_border_size solid $lighter-color;
+
+  &:hover { border: $button_border_size dotted lighten($darker-color, 35%); }
+  &[disabled]
+  {
+    background: lighten($darker-color, 20%);
+    border: $button_border_size solid lighten($darker-color,20%);
+    cursor: default;
+    &:hover { border: $button_border_size solid lighten($darker-color,20%); }
+  }
+}

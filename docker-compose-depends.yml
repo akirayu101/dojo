@@ -1,0 +1,28 @@
+
+version: '3.7'
+
+networks:
+  cyber-dojo:
+    driver: bridge
+    name: cyber-dojo
+
+services:
+
+  web:
+    depends_on:
+      - avatars
+      - creator
+      - differ
+      - repler
+      - runner
+      - saver
+      - shas
+
+  # - - - - - - - - - - - - - - - -
+  creator:
+    depends_on:
+      - custom-start-points
+      - exercises-start-points
+      - languages-start-points
+      - runner
+      - model

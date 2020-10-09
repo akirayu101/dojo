@@ -1,0 +1,103 @@
+
+<img id="settings-button" src="/images/settings.png" />
+
+<div id="settings-dialog" style="display:none;">
+  <div class="info">
+    <div class="info-title">theme</div>
+    <input type="radio" id="light" name="theme" value="light">
+    <label for="light">light</label><br/>
+    <input type="radio" id="dark" name="theme" value="dark">
+    <label for="dark">dark</label>
+  </div>
+  <div class="info">
+    <div class="info-title">colour syntax</div>
+    <input type="radio" id="colour-on" name="colour" value="on">
+    <label for="colour-on">on</label><br/>
+    <input type="radio" id="colour-off" name="colour" value="off">
+    <label for="colour-off">off</label><br/>
+  </div>
+  <div class="info">
+    <div class="info-title">test prediction</div>
+    <input type="radio" id="prediction-on" name="predict" value="on">
+    <label for="prediction-on">on</label><br/>
+    <input type="radio" id="prediction-off" name="predict" value="off">
+    <label for="prediction-off">off</label><br/>
+  </div>
+</div>
+
+
+<script type="text/javascript">
+'use strict';
+$(() => {
+
+  const data = {
+     colour:"<%= @colour %>",  // 'off' || 'on'
+      theme:"<%= @theme %>",   // 'light' || 'dark' (different to CodeMirror theme)
+    predict:"<%= @predict %>"  // 'off' || 'on'
+  };
+
+  cd.settings = {
+     colour:() => data.colour,
+      theme:() => data.theme,
+    predict:() => data.predict
+  };
+
+  //- - - - - - - - - - - - - - - - - - - - - - - - -
+
+  cd.turnOnSettingsButton = () => {
+    $button.show().click(() => openSettingsDialog())
+  };
+
+  //- - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const $button = $('#settings-button');
+  const $settings = $('#settings-dialog');
+
+  $(`input[type=radio][name=theme][value=${data.theme}]`, $settings).prop('checked', true);
+  $(`input[type=radio][name=colour][value=${data.colour}]`, $settings).prop('checked', true);
+  $(`input[type=radio][name=predict][value=${data.predict}]`, $settings).prop('checked', true);
+
+  $('input[type=radio][name=theme]', $settings).change(function() {
+    $.post('/kata/set_theme', { id:cd.kataId(), value:this.value });
+    data.theme = this.value;
+    cd.codeMirror.resetTheme();
+    $('.tab').removeClass('light').removeClass('dark').addClass(this.value); // TODO: refactor
+  });
+
+  $('input[type=radio][name=colour]', $settings).change(function() {
+    $.post('/kata/set_colour', { id:cd.kataId(), value:this.value });
+    data.colour = this.value;
+    cd.codeMirror.resetTheme();
+  });
+
+  $('input[type=radio][name=predict]', $settings).change(function() {
+    $.post('/kata/set_predict', { id:cd.kataId(), value:this.value });
+    data.predict = this.value;
+    cd.predict.reset();
+  });
+
+  $button.click(() => openSettingsDialog());
+
+  cd.createTip($button, 'open settings dialog');
+
+  const openSettingsDialog = () => {
+    const xPos = $button.offset().left;
+    const yPos = $button.offset().top + 90;
+    $settings.dialog({
+              width: 250,
+           position: [xPos,yPos],
+           autoOpen: true,
+      closeOnEscape: true,
+              modal: true,
+              title: cd.dialogTitle('settings'),
+        beforeClose: event => {
+          if (event.keyCode === $.ui.keyCode.ESCAPE) {
+            cd.kata.editor.refocus();
+            return true;
+          }
+        }
+    });
+  };
+
+});
+</script>

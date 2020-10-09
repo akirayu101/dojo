@@ -1,0 +1,65 @@
+
+Idea...
+
+IDE's have a lot of richness in the way devs create code.
+But they have a lot less richness in the feedback of the
+results of that code.
+I would like cyber-dojo to try to be richer in its feedback.
+Have two modes:
+
+- INPUT
+  - a [test] button which takes you to OUTPUT
+  - [new file] [rename file] [delete file] buttons
+  - the source files in alphabetical order
+  - no stdout/stderr/status
+
+- OUTPUT
+  - a [resume] button which takes you back to INPUT
+  - a single traffic-light (not the full sequence)
+  - no traffic-light < > navigation
+  - no diff check-box
+  - no fork/revert/download buttons
+  - at the _top_, stdout/stderr/status in plain view (not diffed)
+  - below sss, a diff view of the source files
+
+A good first step in preparing for this would be to
+cyber-dojo.sh/makefile/etc back into the main filelist
+and have only stdout/stderr/status below that.
+
+So the diff-view has 3 'modes'
+
+1. its own page with its own URL, reached from dashboard
+   - full functionality
+   - shows files at top with diffs
+   - shows sss underneath with no diffs
+2. as pseudo dialog from kata page, reached by pressing [test]
+   - [resume] button
+     o) takes you back to [test] page at the same file with same cursor
+   - two traffic-lights, previous and current, neither with the underbar
+     or perhaps just the two sequence numbers, eg
+        4 -> 5  with both 4 and 5 in their respective colour
+   - no < > navigation
+   - no diff check-box
+   - no fork/revert/download buttons?
+     or maybe allow fork, NOT revert, allow download
+   - sss at the TOP in no-diff view
+     o) one of stdout/stderr will be opened
+   - files below sss in diff view
+3. as pseudo dialog from kata page, reached by pressing a traffic-light
+   - [resume] button
+     o) takes you back to [test] page at the same file with same cursor
+   - full sequence of traffic-lights, current one with underbar
+   - < > navigation
+   - diff check-box
+   - fork/revert/download buttons
+   - files at the TOP in diff-view
+   - sss below in no-diff view
+
+
+Questions...
+In mode 2 how will sss align with the filenames?
+sss do not have +- box-counts and the filenames do.
+Left-align both?
+Perhaps have 2 diff-checkboxes
+- one for sss which is off by default
+- one for filenames which is on by default

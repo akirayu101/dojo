@@ -1,0 +1,137 @@
+'use strict';
+
+(() => {
+
+  const editor = cd.kata.editor;
+
+  const outcome = "<%= j raw(@outcome) %>";
+  const  stdout = "<%= j raw(@stdout['content']) %>";
+  const  stderr = "<%= j raw(@stderr['content']) %>";
+  const  status = "<%= j raw(@status.to_s) %>";
+  const     log = "<%= j raw(@log) %>";
+
+  //- - - - - - - - - - - - - - - - - - - - - -
+  const insertCreatedFiles = () => {
+    <% @created.each do |filename,file| %>
+      editor.createFile(
+        "<%= j raw(filename) %>",
+        { content: "<%= j raw(file['content']) %>" }
+      );
+    <% end %>
+  };
+
+  const removeDeletedFiles = () => {
+    // cyber-dojo.sh cannot be deleted in the browser
+    // but it can be deleted inside the container
+    // and that will come back to here...
+    <% @deleted.each do |filename| %>
+      if ("<%= j raw(filename) %>" !== 'cyber-dojo.sh') {
+        editor.deleteFile("<%= j raw(filename) %>");
+      }
+    <% end %>
+  };
+
+  const updateChangedFiles = () => {
+    <% @changed.each do |filename,file| %>
+      editor.changeFile(
+        "<%= j raw(filename) %>",
+        { content: "<%= j raw(file['content']) %>" }
+      );
+    <% end %>
+  };
+
+  //- - - - - - - - - - - - - - - - - - - - - -
+  const showInfoIfTestsTimedOut = () => {
+    if (outcome === 'timed_out') {
+      const maxSeconds = $('input[name="max_seconds"]').val();
+      const stdoutMessage = `stdout is ${stdout.length === 0 ? '' : 'NOT '}empty.`;
+      const stderrMessage = `stderr is ${stderr.length === 0 ? '' : 'NOT '}empty.`;
+      const info = [
+        `Unable to complete the tests in ${maxSeconds} seconds.`,
+        `-------------------------------------------`,
+        stdoutMessage,
+        stderrMessage,
+        `-------------------------------------------`,
+        log
+      ].join("\n");
+      const html = $('<textarea>', {
+        'data-width':500,
+                'id':'timed-out',
+          'readonly':'readonly'
+      }).val(info);
+      cd.dialog(html, 'timed out', 'close').dialog('open');
+    }
+  };
+
+  //- - - - - - - - - - - - - - - - - - - - - -
+  const showInfoIfTrafficLightFaulty = () => {
+    if (outcome === 'faulty') {
+      const html = $('<textarea>', {
+         'data-width':500,
+                 'id':'faulty',
+           'readonly':'readonly'
+      }).val(log);
+      cd.dialog(html, 'faulty traffic-light', 'close').dialog('open');
+    }
+  };
+
+  //- - - - - - - - - - - - - - - - - - - - - -
+  const showInfoIfAvatarsOutOfSync = () => {
+    const outOfSync = "<%= j raw(@out_of_sync) %>";
+    if (outOfSync === 'true') {
+      const message = [
+        `Failed to save the traffic-light.`,
+        `Are you mobbing in a practice session?`,
+        `If so, please refresh your browser to resync.`,
+      ].join("\n");
+      const html = $('<textarea>', {
+        'data-width':500,
+                'id':'out-of-sync',
+          'readonly':'readonly'
+      }).val(message);
+      cd.dialog(html, 'mobbing?', 'close').dialog('open');
+    }
+  };
+
+  //- - - - - - - - - - - - - - - - - - - - - -
+  const showInfoIfImagePulling = () => {
+    if (outcome === 'pulling') {
+      const message = [
+        `The Docker image is not quite ready yet.`,
+        `Please wait 30 seconds and try again.`,
+      ].join("\n");
+      const html = $('<textarea>', {
+        'data-width':500,
+                'id':'pulling',
+          'readonly':'readonly'
+      }).val(message);
+      cd.dialog(html, 'still preparing', 'close').dialog('open');
+    }
+  };
+
+  //- - - - - - - - - - - - - - - - - - - - - -
+  const showInfoDialogs = () => {
+    showInfoIfAvatarsOutOfSync();
+    showInfoIfTestsTimedOut();
+    showInfoIfTrafficLightFaulty();
+    showInfoIfImagePulling();
+    //showInfoIfTruncatedFiles();
+  };
+
+  //- - - - - - - - - - - - - - - - - - - - - -
+  insertCreatedFiles();
+  removeDeletedFiles();
+  updateChangedFiles();
+
+  cd.kata.filenames.refresh(); // NB: After insert/remove/update
+  cd.kata.editor.output(stdout, stderr, status);
+  cd.kata.tabs.output().click();
+
+  cd.appendTrafficLight(<%= raw @light.to_json %>);
+  cd.updateTrafficLightsCount();
+  cd.scrollLastTrafficLightIntoView();
+  cd.updateIndex(<%= @index %>);
+
+  showInfoDialogs();
+
+})();
