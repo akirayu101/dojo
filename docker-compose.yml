@@ -2,9 +2,7 @@
 version: '3.7'
 
 networks:
-  cyber-dojo:
-    driver: bridge
-    name: cyber-dojo
+- captain-overlay-network
 
 services:
 
@@ -102,9 +100,6 @@ services:
     tmpfs: /tmp
     restart: 'no'
     volumes: [ "/var/run/docker.sock:/var/run/docker.sock" ]
-    networks:
-      - cyber-dojo
-      - default
 
   # - - - - - - - - - - - - - - - -
   runner:
